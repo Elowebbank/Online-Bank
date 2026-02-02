@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo Educational Banking App - Panama Bank</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        input, button {
+            margin: 10px 0;
+            padding: 10px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .hidden {
+            display: none;
+        }
+        .dashboard {
+            margin-top: 20px;
+        }
+        .profile-img {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Panama Bank - Demo Educational Online Banking</h1>
+        <p>This is a demo app emulating a basic online banking interface. All amounts are in US Dollars ($). Accounts are based in Panama for educational purposes.</p>
+        
+        <!-- Login Form -->
+        <div id="login-section">
+            <h2>Login</h2>
+            <form id="login-form">
+                <input type="email" id="login-email" placeholder="Email" required>
+                <input type="password" id="login-password" placeholder="Password" required>
+                <button type="submit">Login</button>
+            </form>
+            <p>Don't have an account? <a href="#" id="show-register">Register here</a></p>
+            <div id="login-message" class="error"></div>
+        </div>
+        
+        <!-- Register Form -->
+        <div id="register-section" class="hidden">
+            <h2>Create New Account</h2>
+            <form id="register-form">
+                <input type="text" id="reg-name" placeholder="Full Name" required>
+                <input type="email" id="reg-email" placeholder="Email" required>
+                <input type="password" id="reg-password" placeholder="Password" required>
+                <input type="text" id="reg-id" placeholder="ID Number" required>
+                <input type="file" id="reg-passport" accept="image/*" required>
+                <button type="submit">Register</button>
+            </form>
+            <p>Already have an account? <a href="#" id="show-login">Login here</a></p>
+            <div id="register-message" class="error"></div>
+        </div>
+        
+        <!-- Dashboard -->
+        <div id="dashboard" class="hidden">
+            <h2>Welcome, <span id="user-name"></span></h2>
+            <img id="user-photo" class="profile-img" alt="User Photo">
+            <p>ID: <span id="user-id"></span></p>
+            <p>Account Balance: $<span id="user-balance">0.00</span></p>
+            <h3>Transaction History</h3>
+            <table id="transactions-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Amount ($)</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <button id="logout">Logout</button>
+            <div id="dashboard-message" class="success"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Replace with your Supabase project details
+        const SUPABASE_URL = 'https://your-supabase-url.supabase.co';
+        const SUPABASE_ANON_KEY = 'your-anon-key';
+
+        const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Helper to format date
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleString();
+        }
+
+        // Show/Hide sections
+        document.getElementById('show-register').addEventListener('click', () => {
+            document.getElementById('login-section').classList.add('hidden');
+            document.getElementById('register-section').classList.remove('hidden');
+        });
+
+        document.getElementById('show-login').addEventListener('click', () => {
+            document.getElementById('register-section').classList.add('hidden');
+            document.getElementById('login-section').classList.remove('hidden');
+        });
+
+        // Register Form Submit
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('reg-name').value;
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+            const idNum = document.getElementById('reg-id').value;
+            const passportFile = document.getElementById('reg-passport').files[0];
+
+            try {
+                // Sign up user
+                const { data: { user }, error: signupError } = await supabase.auth.signUp({ email, password });
+                if (signupError) throw signupError;
+
+                // Insert profile
+                const { error: profileError } = await supabase.from('profiles').insert({
+                    user_id: user.id,
+                    name,
+                    id_text: idNum,
+                    balance: 0.00 // Initial balance, manually update in Supabase
+                });
+                if (profileError) throw profileError;
+
+                // Upload passport
+                const filePath = `\( {user.id}/ \){passportFile.name}`;
+                const { error: uploadError } = await supabase.storage.from('passports').upload(filePath, passportFile);
+                if (uploadError) throw uploadError;
+
+                // Update profile with passport path
+                const { error: updateError } = await supabase.from('profiles').update({ passport_path: filePath }).eq('user_id', user.id);
+                if (updateError) throw updateError;
+
+                document.getElementById('register-message').textContent = 'Account created! You can now login.';
+                document.getElementById('register-message').classList.add('success');
+                document.getElementById('register-message').classList.remove('error');
+            } catch (error) {
+                document.getElementById('register-message').textContent = error.message;
+                document.getElementById('register-message').classList.add('error');
+                document.getElementById('register-message').classList.remove('success');
+            }
+        });
+
+        // Login Form Submit
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            try {
+                const { data: { user }, error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) throw error;
+
+                // Simulate email notification (for demo; in production, use Supabase Edge Function or external service like SendGrid)
+                console.log(`Email sent to ${email}: Your account was accessed at ${new Date().toLocaleString()}`);
+                alert('Demo: Email notification sent for account access.');
+
+                // Load dashboard
+                await loadDashboard(user.id);
+
+                document.getElementById('login-section').classList.add('hidden');
+                document.getElementById('register-section').classList.add('hidden');
+                document.getElementById('dashboard').classList.remove('hidden');
+            } catch (error) {
+                document.getElementById('login-message').textContent = error.message;
+            }
+        });
+
+        // Load Dashboard Data
+        async function loadDashboard(userId) {
+            // Fetch profile
+            const { data: profile, error: profileError } = await supabase.from('profiles').select('*').eq('user_id', userId).single();
+            if (profileError) throw profileError;
+
+            document.getElementById('user-name').textContent = profile.name;
+            document.getElementById('user-id').textContent = profile.id_text;
+            document.getElementById('user-balance').textContent = profile.balance.toFixed(2);
+
+            if (profile.passport_path) {
+                const { data: { publicUrl } } = supabase.storage.from('passports').getPublicUrl(profile.passport_path);
+                document.getElementById('user-photo').src = publicUrl;
+            }
+
+            // Fetch transactions (sorted by timestamp descending)
+            const { data: transactions, error: txError } = await supabase.from('transactions').select('*').eq('user_id', userId).order('created_at', { ascending: false });
+            if (txError) throw txError;
+
+            const tbody = document.querySelector('#transactions-table tbody');
+            tbody.innerHTML = '';
+            transactions.forEach(tx => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${formatDate(tx.created_at)}</td>
+                    <td>${tx.amount.toFixed(2)}</td>
+                    <td>${tx.description || 'N/A'}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Logout
+        document.getElementById('logout').addEventListener('click', async () => {
+            await supabase.auth.signOut();
+            document.getElementById('dashboard').classList.add('hidden');
+            document.getElementById('login-section').classList.remove('hidden');
+        });
+    </script>
+</body>
+</html>
