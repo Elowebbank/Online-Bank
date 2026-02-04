@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Panama International Bank – Educational Demo</title>
+  <style>
+    :root {
+      --primary: #00695c;
+      --primary-dark: #004d40;
+      --light: #f5f5f5;
+      --gray: #e0e0e0;
+      --dark: #263238;
+      --success: #2e7d32;
+      --danger: #c62828;
+    }
+    * { box-sizing: border-box; margin:0; padding:0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--light);
+      color: var(--dark);
+      min-height: 100vh;
+      padding: 16px;
+    }
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    header {
+      background: var(--primary);
+      color: white;
+      padding: 20px 16px;
+      text-align: center;
+    }
+    header h1 { font-size: 1.5rem; margin-bottom: 4px; }
+    header p  { font-size: 0.9rem; opacity: 0.9; }
+    .content { padding: 20px 16px; }
+    h2 { font-size: 1.35rem; margin: 0 0 16px; color: var(--primary-dark); }
+    label { display: block; margin: 0 0 6px; font-weight: 500; font-size: 0.95rem; }
+    input, select, button {
+      width: 100%;
+      padding: 12px 14px;
+      margin-bottom: 14px;
+      border-radius: 8px;
+      font-size: 1rem;
+      border: 1px solid var(--gray);
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(0,105,92,0.15);
+    }
+    button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover { background: var(--primary-dark); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .toggle-link {
+      color: var(--primary);
+      text-decoration: underline;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .toggle-link:hover {
+      color: var(--primary-dark);
+    }
+    .hidden { display: none !important; }
+    .message {
+      padding: 10px 14px;
+      border-radius: 8px;
+      margin: 12px 0;
+      font-size: 0.95rem;
+    }
+    .success { background: #e8f5e9; color: var(--success); }
+    .error   { background: #ffebee; color: var(--danger); }
+    .profile-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    #user-photo {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--primary);
+      background: #eee;
+    }
+    .balance-box {
+      background: #e0f2f1;
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      margin: 20px 0;
+    }
+    .balance-box .amount {
+      font-size: 2.1rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+    }
+    th, td {
+      padding: 10px 8px;
+      text-align: left;
+      border-bottom: 1px solid var(--gray);
+    }
+    th { background: #f8f9fa; font-weight: 600; }
+    .positive { color: var(--success); }
+    .negative { color: var(--danger); }
+    .center { text-align: center; color: #777; padding: 30px 0; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <header>
+    <h1>Panama International Bank</h1>
+    <p>Educational Demo App • Multi-Currency (USD Default)</p>
+  </header>
+
+  <div class="content">
+
+    <!-- LOGIN -->
+    <div id="login-screen">
+      <h2>Sign In</h2>
+      <form id="frm-login">
+        <label for="login-email">Email</label>
+        <input type="email" id="login-email" required autocomplete="email" placeholder="you@example.com"/>
+
+        <label for="login-password">Password</label>
+        <input type="password" id="login-password" required autocomplete="current-password"/>
+
+        <button type="submit">Sign In</button>
+      </form>
+
+      <p style="margin-top:16px; text-align:center;">
+        New user? <span class="toggle-link" id="to-register">Create Account</span>
+      </p>
+
+      <div id="login-msg" class="message hidden"></div>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="register-screen" class="hidden">
+      <h2>Create New Account</h2>
+      <form id="frm-register">
+        <label for="reg-name">Full Name</label>
+        <input type="text" id="reg-name" required placeholder="Juan Pérez"/>
+
+        <label for="reg-email">Email</label>
+        <input type="email" id="reg-email" required autocomplete="email" placeholder="you@example.com"/>
+
+        <label for="reg-password">Password (min 6 chars)</label>
+        <input type="password" id="reg-password" required minlength="6" autocomplete="new-password"/>
+
+        <label for="reg-id">ID / Passport Number</label>
+        <input type="text" id="reg-id" required placeholder="PE-12345678"/>
+
+        <label for="reg-country">Country of Residence</label>
+        <select id="reg-country" required>
+          <option value="">Select Country</option>
+          <option value="PA">Panama</option>
+          <option value="US">United States</option>
+          <option value="NG">Nigeria</option>
+          <option value="GB">United Kingdom</option>
+        </select>
+
+        <label for="reg-passport">Upload Passport/ID Photo</label>
+        <input type="file" id="reg-passport" accept="image/jpeg,image/png" required/>
+
+        <button type="submit">Create Account</button>
+      </form>
+
+      <p style="margin-top:16px; text-align:center;">
+        Already have an account? <span class="toggle-link" id="to-login">Sign In</span>
+      </p>
+
+      <div id="register-msg" class="message hidden"></div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboard-screen" class="hidden">
+      <div class="profile-header">
+        <img id="user-photo" src="" alt="Profile Photo"/>
+        <div>
+          <div style="font-size:1.25rem; font-weight:600;" id="user-name">—</div>
+          <div style="color:#555; font-size:0.9rem;" id="user-id">ID: —</div>
+          <div style="color:#555; font-size:0.9rem;" id="user-country">Country: —</div>
+        </div>
+      </div>
+
+      <div class="balance-box">
+        <div>Account Balance (USD)</div>
+        <div class="amount">$<span id="user-balance">0.00</span></div>
+      </div>
+
+      <h2>Quick Actions</h2>
+      <button id="btn-new-transfer" style="margin-bottom: 12px;">Make New Transfer</button>
+      <button id="btn-add-funds" style="margin-bottom: 12px;">Add Funds (Demo)</button>
+
+      <h2>Transaction History</h2>
+      <table id="tx-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Amount</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div class="center hidden" id="no-tx-msg">No transactions yet</div>
+
+      <button id="btn-logout" style="margin-top:28px;">Sign Out</button>
+    </div>
+
+    <!-- NEW TRANSFER -->
+    <div id="transfer-screen" class="hidden">
+      <h2>New Transfer</h2>
+      <form id="frm-transfer">
+        <label for="tx-type">Transfer Type</label>
+        <select id="tx-type" required>
+          <option value="">Select Type</option>
+          <option value="domestic">Domestic (Same Country)</option>
+          <option value="international">International</option>
+        </select>
+
+        <label for="tx-recipient">Recipient (Email or Account #)</label>
+        <input type="text" id="tx-recipient" required placeholder="recipient@example.com or IBAN"/>
+
+        <label for="tx-amount">Amount (USD)</label>
+        <input type="number" id="tx-amount" required min="0.01" step="0.01" placeholder="10.00"/>
+
+        <label for="tx-description">Description</label>
+        <input type="text" id="tx-description" placeholder="e.g., Payment for services"/>
+
+        <button type="submit">Send Transfer</button>
+      </form>
+
+      <p style="margin-top:16px; text-align:center;">
+        <span class="toggle-link" id="cancel-transfer">Cancel</span>
+      </p>
+
+      <div id="transfer-msg" class="message hidden"></div>
+    </div>
+
+    <!-- ADD FUNDS -->
+    <div id="add-funds-screen" class="hidden">
+      <h2>Add Funds (Demo)</h2>
+      <form id="frm-add-funds">
+        <label for="fund-amount">Amount (USD)</label>
+        <input type="number" id="fund-amount" required min="0.01" step="0.01" placeholder="100.00"/>
+
+        <label for="fund-source">Source</label>
+        <select id="fund-source" required>
+          <option value="">Select Source</option>
+          <option value="bank">Bank Transfer</option>
+          <option value="card">Credit/Debit Card</option>
+        </select>
+
+        <button type="submit">Add Funds</button>
+      </form>
+
+      <p style="margin-top:16px; text-align:center;">
+        <span class="toggle-link" id="cancel-add-funds">Cancel</span>
+      </p>
+
+      <div id="add-funds-msg" class="message hidden"></div>
+    </div>
+
+  </div>
+</div>
+
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+
+  const SUPABASE_URL  = 'https://sdefqninxwqsximgmgca.supabase.co'
+  const SUPABASE_KEY  = 'sb_publishable_-8j-Gt4OiJFWcL2R2bhJsw_Siznvz52'
+
+  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
+
+  // Helpers
+  const $ = id => document.getElementById(id)
+  const show = id => $(id).classList.remove('hidden')
+  const hide = id => $(id).classList.add('hidden')
+
+  function showMessage(elId, text, type = 'error') {
+    const el = $(elId)
+    el.textContent = text
+    el.className = 'message ' + (type === 'success' ? 'success' : 'error')
+    show(elId)
+  }
+
+  function hideMessage(elId) {
+    hide(elId)
+    $(elId).textContent = ''
+  }
+
+  function formatDate(iso) {
+    return new Date(iso).toLocaleString('en-US', {
+      month: 'short', day: 'numeric', year: 'numeric',
+      hour: 'numeric', minute: '2-digit', hour12: true
+    })
+  }
+
+  // Navigation
+  $('to-register').onclick = () => { hide('login-screen'); show('register-screen') }
+  $('to-login').onclick    = () => { hide('register-screen'); show('login-screen') }
+  $('btn-new-transfer').onclick = () => { show('transfer-screen'); hideMessage('transfer-msg') }
+  $('cancel-transfer').onclick = () => { hide('transfer-screen'); $('frm-transfer').reset(); hideMessage('transfer-msg') }
+  $('btn-add-funds').onclick = () => { show('add-funds-screen'); hideMessage('add-funds-msg') }
+  $('cancel-add-funds').onclick = () => { hide('add-funds-screen'); $('frm-add-funds').reset(); hideMessage('add-funds-msg') }
+
+  // REGISTER
+  $('frm-register').onsubmit = async e => {
+    e.preventDefault()
+    const btn = e.target.querySelector('button')
+    btn.disabled = true
+    hideMessage('register-msg')
+
+    try {
+      const email    = $('reg-email').value.trim()
+      const password = $('reg-password').value
+      const name     = $('reg-name').value.trim()
+      const id_text  = $('reg-id').value.trim()
+      const country  = $('reg-country').value
+      const file     = $('reg-passport').files[0]
+
+      if (!file) throw new Error("Please upload a passport/ID photo")
+      if (!country) throw new Error("Please select your country")
+
+      // 1. Sign up
+      const { data: { user }, error: signUpErr } = await supabase.auth.signUp({ email, password })
+      if (signUpErr) throw signUpErr
+      if (!user) throw new Error("Signup did not return a user")
+
+      // 2. Upload photo
+      const ext = file.name.split('.').pop().toLowerCase()
+      const path = `\( {user.id}/ \){crypto.randomUUID()}.${ext}`
+
+      const { error: uploadErr } = await supabase.storage
+        .from('passports')
+        .upload(path, file, { contentType: file.type })
+
+      if (uploadErr) throw uploadErr
+
+      // 3. Create profile
+      const { error: profileErr } = await supabase
+        .from('profiles')
+        .insert({ 
+          user_id: user.id, 
+          name, 
+          id_text, 
+          passport_path: path, 
+          balance: 0,
+          country_code: country 
+        })
+
+      if (profileErr) throw profileErr
+
+      showMessage('register-msg', "Account created! You can now sign in.", 'success')
+      setTimeout(() => {
+        hide('register-screen')
+        show('login-screen')
+        $('frm-register').reset()
+      }, 2200)
+
+    } catch (err) {
+      showMessage('register-msg', err.message || "Registration failed. Please try again.", 'error')
+    } finally {
+      btn.disabled = false
+    }
+  }
+
+  // LOGIN
+  $('frm-login').onsubmit = async e => {
+    e.preventDefault()
+    const btn = e.target.querySelector('button')
+    btn.disabled = true
+    hideMessage('login-msg')
+
+    try {
+      const email    = $('login-email').value.trim()
+      const password = $('login-password').value
+
+      const { data: { user }, error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) throw error
+      if (!user) throw new Error("Login failed")
+
+      alert("Demo: Access notification email would be sent now.")
+      await loadDashboard(user.id)
+
+      hide('login-screen')
+      show('dashboard-screen')
+      $('frm-login').reset()
+
+    } catch (err) {
+      showMessage('login-msg', err.message || "Invalid credentials. Please try again.", 'error')
+    } finally {
+      btn.disabled = false
+    }
+  }
+
+  // LOAD DASHBOARD
+  async function loadDashboard(userId) {
+    try {
+      const { data: profile, error: pErr } = await supabase
+        .from('profiles')
+        .select('name, id_text, passport_path, balance, country_code')
+        .eq('user_id', userId)
+        .maybeSingle()
+
+      if (pErr) throw pErr
+      if (!profile) throw new Error("Profile not found")
+
+      $('user-name').textContent    = profile.name || 'User'
+      $('user-id').textContent      = `ID: ${profile.id_text || '—'}`
+      $('user-country').textContent = `Country: ${profile.country_code || '—'}`
+      $('user-balance').textContent = Number(profile.balance || 0).toFixed(2)
+
+      if (profile.passport_path) {
+        const { data } = supabase.storage.from('passports').getPublicUrl(profile.passport_path)
+        $('user-photo').src = data.publicUrl
+      }
+
+      const { data: txs, error: txErr } = await supabase
+        .from('transactions')
+        .select('created_at, amount, description')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+
+      if (txErr) throw txErr
+
+      const tbody = $('tx-table').querySelector('tbody')
+      tbody.innerHTML = ''
+
+      if (!txs?.length) {
+        show('no-tx-msg')
+        return
+      }
+
+      hide('no-tx-msg')
+
+      txs.forEach(tx => {
+        const tr = document.createElement('tr')
+        const amtClass = tx.amount >= 0 ? 'positive' : 'negative'
+        const sign = tx.amount >= 0 ? '+' : '-'
+        tr.innerHTML = `
+          <td>${formatDate(tx.created_at)}</td>
+          <td class="\( {amtClass}"> \){sign}\[ {Math.abs(tx.amount).toFixed(2)}</td>
+          <td>${tx.description || '—'}</td>
+        `
+        tbody.appendChild(tr)
+      })
+
+    } catch (err) {
+      alert("Error loading dashboard: " + (err.message || "Please try again."))
+    }
+  }
+
+  // NEW TRANSFER
+  $('frm-transfer').onsubmit = async e => {
+    e.preventDefault()
+    const btn = e.target.querySelector('button')
+    btn.disabled = true
+    hideMessage('transfer-msg')
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("Session expired. Please log in again.")
+
+      const type = $('tx-type').value
+      const recipient = $('tx-recipient').value.trim()
+      const amount = parseFloat($('tx-amount').value)
+      const description = \( ('tx-description').value.trim() || ` \){type.charAt(0).toUpperCase() + type.slice(1)} transfer to ${recipient}`
+
+      if (amount <= 0) throw new Error("Amount must be positive")
+      if (!type || !recipient) throw new Error("Please fill all required fields")
+
+      const { data: profile, error: pErr } = await supabase
+        .from('profiles')
+        .select('balance')
+        .eq('user_id', user.id)
+        .single()
+
+      if (pErr || !profile) throw new Error("Could not fetch balance")
+      if (profile.balance < amount) throw new Error("Insufficient balance")
+
+      const { error: txErr } = await supabase
+        .from('transactions')
+        .insert({
+          user_id: user.id,
+          amount: -amount,
+          description
+        })
+
+      if (txErr) throw txErr
+
+      const newBalance = profile.balance - amount
+      const { error: balErr } = await supabase
+        .from('profiles')
+        .update({ balance: newBalance })
+        .eq('user_id', user.id)
+
+      if (balErr) throw balErr
+
+      showMessage('transfer-msg', `Transfer of \]{amount.toFixed(2)} sent successfully!`, 'success')
+      setTimeout(async () => {
+        hide('transfer-screen')
+        $('frm-transfer').reset()
+        hideMessage('transfer-msg')
+        await loadDashboard(user.id)
+      }, 2000)
+
+    } catch (err) {
+      showMessage('transfer-msg', err.message || "Transfer failed. Please try again.", 'error')
+    } finally {
+      btn.disabled = false
+    }
+  }
+
+  // ADD FUNDS (DEMO)
+  $('frm-add-funds').onsubmit = async e => {
+    e.preventDefault()
+    const btn = e.target.querySelector('button')
+    btn.disabled = true
+    hideMessage('add-funds-msg')
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("Session expired. Please log in again.")
+
+      const amount = parseFloat($('fund-amount').value)
+      const source = $('fund-source').value
+
+      if (amount <= 0) throw new Error("Amount must be positive")
+      if (!source) throw new Error("Please select a source")
+
+      const { data: profile, error: pErr } = await supabase
+        .from('profiles')
+        .select('balance')
+        .eq('user_id', user.id)
+        .single()
+
+      if (pErr || !profile) throw new Error("Could not fetch balance")
+
+      const description = `Added funds from ${source} (demo)`
+      const { error: txErr } = await supabase
+        .from('transactions')
+        .insert({
+          user_id: user.id,
+          amount: amount,
+          description
+        })
+
+      if (txErr) throw txErr
+
+      const newBalance = profile.balance + amount
+      const { error: balErr } = await supabase
+        .from('profiles')
+        .update({ balance: newBalance })
+        .eq('user_id', user.id)
+
+      if (balErr) throw balErr
+
+      showMessage('add-funds-msg', `$${amount.toFixed(2)} added successfully!`, 'success')
+      setTimeout(async () => {
+        hide('add-funds-screen')
+        $('frm-add-funds').reset()
+        hideMessage('add-funds-msg')
+        await loadDashboard(user.id)
+      }, 2000)
+
+    } catch (err) {
+      showMessage('add-funds-msg', err.message || "Add funds failed. Please try again.", 'error')
+    } finally {
+      btn.disabled = false
+    }
+  }
+
+  // LOGOUT
+  $('btn-logout').onclick = async () => {
+    await supabase.auth.signOut()
+    hide('dashboard-screen')
+    show('login-screen')
+    $('user-photo').src = ''
+  }
+
+  // Auto-login check
+  supabase.auth.getSession().then(({ data }) => {
+    if (data.session?.user) {
+      loadDashboard(data.session.user.id)
+      hide('login-screen')
+      show('dashboard-screen')
+    }
+  })
+</script>
+</body>
+</html>
